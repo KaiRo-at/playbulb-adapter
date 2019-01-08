@@ -1,5 +1,5 @@
 /**
- * example-adapter.js - Example adapter.
+ * playbulb-adapter.js - MiPow Playbulb adapter.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,7 +24,7 @@ try {
   Property = gwa.Property;
 }
 
-class ExampleProperty extends Property {
+class PlaybulbProperty extends Property {
   constructor(device, name, propertyDescription) {
     super(device, name, propertyDescription);
     this.setCachedValue(propertyDescription.value);
@@ -52,7 +52,7 @@ class ExampleProperty extends Property {
   }
 }
 
-class ExampleDevice extends Device {
+class PlaybulbDevice extends Device {
   constructor(adapter, id, deviceDescription) {
     super(adapter, id);
     this.name = deviceDescription.name;
@@ -61,21 +61,21 @@ class ExampleDevice extends Device {
     this.description = deviceDescription.description;
     for (const propertyName in deviceDescription.properties) {
       const propertyDescription = deviceDescription.properties[propertyName];
-      const property = new ExampleProperty(this, propertyName,
+      const property = new PlaybulbProperty(this, propertyName,
                                            propertyDescription);
       this.properties.set(propertyName, property);
     }
   }
 }
 
-class ExampleAdapter extends Adapter {
+class PlaybulbAdapter extends Adapter {
   constructor(addonManager, packageName) {
-    super(addonManager, 'ExampleAdapter', packageName);
+    super(addonManager, 'PlaybulbAdapter', packageName);
     addonManager.addAdapter(this);
   }
 
   /**
-   * Example process to add a new device to the adapter.
+   * Process to add a new device to the adapter.
    *
    * The important part is to call: `this.handleDeviceAdded(device)`
    *
@@ -88,7 +88,7 @@ class ExampleAdapter extends Adapter {
       if (deviceId in this.devices) {
         reject(`Device: ${deviceId} already exists.`);
       } else {
-        const device = new ExampleDevice(this, deviceId, deviceDescription);
+        const device = new PlaybulbDevice(this, deviceId, deviceDescription);
         this.handleDeviceAdded(device);
         resolve(device);
       }
@@ -96,7 +96,7 @@ class ExampleAdapter extends Adapter {
   }
 
   /**
-   * Example process ro remove a device from the adapter.
+   * Process to remove a device from the adapter.
    *
    * The important part is to call: `this.handleDeviceRemoved(device)`
    *
@@ -121,7 +121,7 @@ class ExampleAdapter extends Adapter {
    * @param {Number} timeoutSeconds Number of seconds to run before timeout
    */
   startPairing(_timeoutSeconds) {
-    console.log('ExampleAdapter:', this.name,
+    console.log('PlaybulbAdapter:', this.name,
                 'id', this.id, 'pairing started');
   }
 
@@ -129,7 +129,7 @@ class ExampleAdapter extends Adapter {
    * Cancel the pairing/discovery process.
    */
   cancelPairing() {
-    console.log('ExampleAdapter:', this.name, 'id', this.id,
+    console.log('PlaybulbAdapter:', this.name, 'id', this.id,
                 'pairing cancelled');
   }
 
@@ -139,13 +139,13 @@ class ExampleAdapter extends Adapter {
    * @param {Object} device Device to unpair with
    */
   removeThing(device) {
-    console.log('ExampleAdapter:', this.name, 'id', this.id,
+    console.log('PlaybulbAdapter:', this.name, 'id', this.id,
                 'removeThing(', device.id, ') started');
 
     this.removeDevice(device.id).then(() => {
-      console.log('ExampleAdapter: device:', device.id, 'was unpaired.');
+      console.log('PlaybulbAdapter: device:', device.id, 'was unpaired.');
     }).catch((err) => {
-      console.error('ExampleAdapter: unpairing', device.id, 'failed');
+      console.error('PlaybulbAdapter: unpairing', device.id, 'failed');
       console.error(err);
     });
   }
@@ -156,18 +156,18 @@ class ExampleAdapter extends Adapter {
    * @param {Object} device Device that is currently being paired
    */
   cancelRemoveThing(device) {
-    console.log('ExampleAdapter:', this.name, 'id', this.id,
+    console.log('PlaybulbAdapter:', this.name, 'id', this.id,
                 'cancelRemoveThing(', device.id, ')');
   }
 }
 
-function loadExampleAdapter(addonManager, manifest, _errorCallback) {
-  const adapter = new ExampleAdapter(addonManager, manifest.name);
-  const device = new ExampleDevice(adapter, 'example-plug-2', {
-    name: 'example-plug-2',
-    '@type': ['OnOffSwitch'],
-    type: 'onOffSwitch',
-    description: 'Example Device',
+function loadPlaybulbAdapter(addonManager, manifest, _errorCallback) {
+  const adapter = new PlaybulbAdapter(addonManager, manifest.name);
+  const device = new PlaybulbDevice(adapter, 'playbulb-device-1', {
+    name: 'playbulb-device-1',
+    '@type': ['Light'],
+    type: 'light',
+    description: 'Playbulb Device',
     properties: {
       on: {
         '@type': 'OnOffProperty',
@@ -176,9 +176,16 @@ function loadExampleAdapter(addonManager, manifest, _errorCallback) {
         type: 'boolean',
         value: false,
       },
+      color: {
+        '@type': 'ColorProperty,
+        label: 'Color',
+        name: 'color',
+        type: 'string',
+        value: '#FFFFFF',
+      },
     },
   });
   adapter.handleDeviceAdded(device);
 }
 
-module.exports = loadExampleAdapter;
+module.exports = loadPlaybulbAdapter;

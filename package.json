@@ -1,24 +1,24 @@
 {
-  "name": "example-adapter",
-  "display_name": "Example",
-  "version": "0.4.0",
-  "description": "Example adapter add-on for Mozilla IoT Gateway",
-  "author": "Mozilla IoT",
+  "name": "playbulb-adapter",
+  "display_name": "Playbulb",
+  "version": "0.0.1",
+  "description": "Mozilla IoT Gateway adapter add-on for MiPow Playbulb devices",
+  "author": "Robert Kaiser",
   "main": "index.js",
   "keywords": [
     "mozilla",
     "iot",
     "adapter",
-    "example"
+    "playbulb"
   ],
-  "homepage": "https://github.com/mozilla-iot/example-adapter",
+  "homepage": "https://github.com/KaiRo-at/playbulb-adapter",
   "license": "MPL-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mozilla-iot/example-adapter.git"
+    "url": "https://github.com/KaiRo-at/playbulb-adapter.git"
   },
   "bugs": {
-    "url": "https://github.com/mozilla-iot/example-adapter/issues"
+    "url": "https://github.com/KaiRo-at/playbulb-adapter/issues"
   },
   "devDependencies": {
     "eslint": "^4.19.1"
@@ -26,7 +26,7 @@
   "files": [
     "LICENSE",
     "SHA256SUMS",
-    "example-adapter.js",
+    "playbulb-adapter.js",
     "index.js"
   ],
   "moziot": {

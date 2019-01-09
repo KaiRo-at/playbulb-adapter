@@ -141,32 +141,61 @@ class PlaybulbAdapter extends Adapter {
    * We discovered a BLE device! Let's see if it's a Playbulb and add it.
    */
   _handleDiscover(peripheral) {
-    console.log('peripheral discovered (' + peripheral.id +
-                ' with address <' + peripheral.address +  ', ' + peripheral.addressType + '>,' +
-                ' connectable ' + peripheral.connectable + ',' +
-                ' RSSI ' + peripheral.rssi + ':');
-    console.log('\thello my local name is:');
-    console.log('\t\t' + peripheral.advertisement.localName);
-    console.log('\tcan I interest you in any of the following advertised services:');
-    console.log('\t\t' + JSON.stringify(peripheral.advertisement.serviceUuids));
+    if (peripheral.advertisement.localName.startsWith('PLAYBULB ') &&
+        JSON.stringify(peripheral.advertisement.manufacturerData.toString('hex')).startsWith('4d49') &&
+        peripheral.connectable) {
+      // The localName says it's a Playbulb, the manufacturerData starts with
+      // the MiPow identifier, and it's connectable, so we should be good. :)
+      console.log('Playbulb device discovered: ' + peripheral.advertisement.localName);
+      console.log('    address: ' + peripheral.address +  ', RSSI ' + peripheral.rssi);
+      console.log('    manufacturer data: ' + JSON.stringify(peripheral.advertisement.manufacturerData.toString('hex')));
+      console.log('    advertised services: ' + JSON.stringify(peripheral.advertisement.serviceUuids));
 
-    var serviceData = peripheral.advertisement.serviceData;
-    if (serviceData && serviceData.length) {
-      console.log('\there is my service data:');
-      for (var i in serviceData) {
-        console.log('\t\t' + JSON.stringify(serviceData[i].uuid) + ': ' + JSON.stringify(serviceData[i].data.toString('hex')));
+      for (var svc_id in peripheral.advertisement.serviceUuids) {
+        peripheral.discoverServices([svc_id], function(error, services) {
+          var deviceInformationService = services[0];
+          console.log('discovered device information service ' + svc_id);
+
+          deviceInformationService.discoverCharacteristics(null, function(error, characteristics) {
+            console.log('discovered the following characteristics:');
+            for (var i in characteristics) {
+              console.log('  ' + i + ' uuid: ' + characteristics[i].uuid);
+            }
+          });
+        });
       }
-    }
-    if (peripheral.advertisement.manufacturerData) {
-      console.log('\there is my manufacturer data:');
-      console.log('\t\t' + JSON.stringify(peripheral.advertisement.manufacturerData.toString('hex')));
-    }
-    if (peripheral.advertisement.txPowerLevel !== undefined) {
-      console.log('\tmy TX power level is:');
-      console.log('\t\t' + peripheral.advertisement.txPowerLevel);
-    }
+      console.log();
 
-    console.log();
+      // Actually construct and add device.
+      var device = new PlaybulbDevice(adapter, peripheral.advertisement.localName, {
+        name: peripheral.advertisement.localName,
+        '@type': ['Light'],
+        type: 'light',
+        description: peripheral.advertisement.localName + ' ' + peripheral.address,
+        properties: {
+          on: {
+            '@type': 'OnOffProperty',
+            label: 'On/Off',
+            name: 'on',
+            type: 'boolean',
+            value: false,
+          },
+          color: {
+            '@type': 'ColorProperty',
+            label: 'Color',
+            name: 'color',
+            type: 'string',
+            value: '#FFFFFF',
+          },
+        },
+      });
+      this.handleDeviceAdded(device);
+
+    }
+    else {
+      // In production, we want to be silent here. For now, emit debug info.
+      console.log('Ignoring non-Playbulb device: ' + peripheral.advertisement.localName);
+    }
   }
 
   /**

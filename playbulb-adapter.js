@@ -141,33 +141,37 @@ class PlaybulbAdapter extends Adapter {
    * We discovered a BLE device! Let's see if it's a Playbulb and add it.
    */
   _handleDiscover(peripheral) {
-    if (peripheral.advertisement.localName.startsWith('PLAYBULB ') &&
-        JSON.stringify(peripheral.advertisement.manufacturerData.toString('hex')).startsWith('4d49') &&
+    if (peripheral.advertisement.localName &&
+        peripheral.advertisement.localName.startsWith('PLAYBULB ') &&
+        peripheral.advertisement.manufacturerData.toString('hex').startsWith('4d49') &&
         peripheral.connectable) {
       // The localName says it's a Playbulb, the manufacturerData starts with
       // the MiPow identifier, and it's connectable, so we should be good. :)
       console.log('Playbulb device discovered: ' + peripheral.advertisement.localName);
       console.log('    address: ' + peripheral.address +  ', RSSI ' + peripheral.rssi);
-      console.log('    manufacturer data: ' + JSON.stringify(peripheral.advertisement.manufacturerData.toString('hex')));
+      console.log('    manufacturer data: ' + peripheral.advertisement.manufacturerData.toString('hex'));
       console.log('    advertised services: ' + JSON.stringify(peripheral.advertisement.serviceUuids));
 
-      for (var svc_id in peripheral.advertisement.serviceUuids) {
-        peripheral.discoverServices([svc_id], function(error, services) {
-          var deviceInformationService = services[0];
-          console.log('discovered device information service ' + svc_id);
+      peripheral.connect(function(error) {
+        peripheral.discoverServices(null, function(error, services) {
+          for (var si in services) {
+            var deviceInformationService = services[si];
+            console.log('discovered device information service ' + services[si].uuid);
 
-          deviceInformationService.discoverCharacteristics(null, function(error, characteristics) {
-            console.log('discovered the following characteristics:');
-            for (var i in characteristics) {
-              console.log('  ' + i + ' uuid: ' + characteristics[i].uuid);
-            }
-          });
+            deviceInformationService.discoverCharacteristics(null, function(error, characteristics) {
+              console.log('discovered the following characteristics:');
+              for (var ci in characteristics) {
+                console.log('  ' + ci + ' uuid: ' + characteristics[ci].uuid);
+              }
+            });
+          }
         });
-      }
+        peripheral.disconnect();
+      });
       console.log();
 
       // Actually construct and add device.
-      var device = new PlaybulbDevice(adapter, peripheral.advertisement.localName, {
+      var device = new PlaybulbDevice(this, 'playbulb-' + peripheral.address, {
         name: peripheral.advertisement.localName,
         '@type': ['Light'],
         type: 'light',
@@ -194,7 +198,7 @@ class PlaybulbAdapter extends Adapter {
     }
     else {
       // In production, we want to be silent here. For now, emit debug info.
-      console.log('Ignoring non-Playbulb device: ' + peripheral.advertisement.localName);
+      console.log('Ignoring non-Playbulb device: ' + peripheral.advertisement.localName + ' (' + peripheral.address +')');
     }
   }
 
@@ -305,31 +309,6 @@ class PlaybulbAdapter extends Adapter {
 
 function loadPlaybulbAdapter(addonManager, manifest, _errorCallback) {
   const adapter = new PlaybulbAdapter(addonManager, manifest.name);
-  /* this just fakes a device...
-  const device = new PlaybulbDevice(adapter, 'playbulb-device-1', {
-    name: 'playbulb-device-1',
-    '@type': ['Light'],
-    type: 'light',
-    description: 'Playbulb Device',
-    properties: {
-      on: {
-        '@type': 'OnOffProperty',
-        label: 'On/Off',
-        name: 'on',
-        type: 'boolean',
-        value: false,
-      },
-      color: {
-        '@type': 'ColorProperty',
-        label: 'Color',
-        name: 'color',
-        type: 'string',
-        value: '#FFFFFF',
-      },
-    },
-  });
-  adapter.handleDeviceAdded(device);
-  */
 }
 
 module.exports = loadPlaybulbAdapter;

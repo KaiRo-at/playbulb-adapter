@@ -74,6 +74,14 @@ class PlaybulbAdapter extends Adapter {
     super(addonManager, 'PlaybulbAdapter', packageName);
     addonManager.addAdapter(this);
 
+    // Bind to |this| as they get called on the noble object.
+    this.handleStateChange = this._handleStateChange.bind(this);
+    this.handleDiscover = this._handleDiscover.bind(this);
+    this.handleScanStart = this._handleScanStart.bind(this);
+    this.handleScanStop = this._handleScanStop.bind(this);
+
+    // Now we are ready to start discovery.
+    noble.on('warning', (e) => console.warn('noble warning:', e));
     this.scanEnabled = false;
     this._startBLEDiscovery();
   }
@@ -106,21 +114,22 @@ class PlaybulbAdapter extends Adapter {
   }
 
   /**
+   * handle scanEnabled flag. Also, note that those functions will be called on the noble object, so we need to bind then to |this| in the constructor.
    * <mrstegeman> those are event callbacks. i found that noble doesn't do well when trying to both scan and communicate with an individual device, so when doing comms, i set a flag.
    * <mrstegeman> so, if a scan was started right before comms start, i just shut down the scan in the callback
    */
-  handleScanStart() {
+  _handleScanStart() {
     if (!this.scanEnabled) {
       this._stopNobleScanning();
     }
   }
-  handleScanStop() {
+  _handleScanStop() {
     if (this.scanEnabled) {
       this._startNobleScanning();
     }
   }
 
-  handleStateChange(state) {
+  _handleStateChange(state) {
     if (state === 'poweredOn' && this.scanEnabled) {
       this._startNobleScanning();
     } else {
@@ -131,7 +140,7 @@ class PlaybulbAdapter extends Adapter {
   /**
    * We discovered a BLE device! Let's see if it's a Playbulb and add it.
    */
-  handleDiscover(peripheral) {
+  _handleDiscover(peripheral) {
     console.log('peripheral discovered (' + peripheral.id +
                 ' with address <' + peripheral.address +  ', ' + peripheral.addressType + '>,' +
                 ' connectable ' + peripheral.connectable + ',' +
@@ -267,6 +276,7 @@ class PlaybulbAdapter extends Adapter {
 
 function loadPlaybulbAdapter(addonManager, manifest, _errorCallback) {
   const adapter = new PlaybulbAdapter(addonManager, manifest.name);
+  /* this just fakes a device...
   const device = new PlaybulbDevice(adapter, 'playbulb-device-1', {
     name: 'playbulb-device-1',
     '@type': ['Light'],
@@ -290,6 +300,7 @@ function loadPlaybulbAdapter(addonManager, manifest, _errorCallback) {
     },
   });
   adapter.handleDeviceAdded(device);
+  */
 }
 
 module.exports = loadPlaybulbAdapter;

@@ -177,7 +177,7 @@ function loadPlaybulbAdapter(addonManager, manifest, _errorCallback) {
         value: false,
       },
       color: {
-        '@type': 'ColorProperty,
+        '@type': 'ColorProperty',
         label: 'Color',
         name: 'color',
         type: 'string',

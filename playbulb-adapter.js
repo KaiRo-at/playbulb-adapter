@@ -152,6 +152,7 @@ class PlaybulbAdapter extends Adapter {
       console.log('    manufacturer data: ' + peripheral.advertisement.manufacturerData.toString('hex'));
       console.log('    advertised services: ' + JSON.stringify(peripheral.advertisement.serviceUuids));
 
+      /*
       peripheral.connect(function(error) {
         peripheral.discoverServices(null, function(error, services) {
           for (var si in services) {
@@ -168,6 +169,7 @@ class PlaybulbAdapter extends Adapter {
         });
         peripheral.disconnect();
       });
+      */
       console.log();
 
       // Actually construct and add device.

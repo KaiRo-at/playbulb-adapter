@@ -131,7 +131,7 @@ class PlaybulbAdapter extends Adapter {
   /**
    * We discovered a BLE device! Let's see if it's a Playbulb and add it.
    */
-  _handleDiscover(peripheral) {
+  handleDiscover(peripheral) {
     console.log('peripheral discovered (' + peripheral.id +
                 ' with address <' + peripheral.address +  ', ' + peripheral.addressType + '>,' +
                 ' connectable ' + peripheral.connectable + ',' +

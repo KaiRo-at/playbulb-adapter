@@ -98,7 +98,7 @@ class PlaybulbAdapter extends Adapter {
    * Stop discovering BLE devices.
    */
   _stopBLEDiscovery() {
-    noble.stopScanning();
+    this._stopNobleScanning();
     noble.removeListener('stateChange', this.handleStateChange);
     noble.removeListener('scanStart', this.handleScanStart);
     noble.removeListener('scanStop', this.handleScanStop);
@@ -111,7 +111,7 @@ class PlaybulbAdapter extends Adapter {
    */
   handleScanStart() {
     if (!this.scanEnabled) {
-      noble.stopScanning();
+      this._stopNobleScanning();
     }
   }
   handleScanStop() {
@@ -124,7 +124,7 @@ class PlaybulbAdapter extends Adapter {
     if (state === 'poweredOn' && this.scanEnabled) {
       this._startNobleScanning();
     } else {
-      noble.stopScanning();
+      this._stopNobleScanning();
     }
   }
 
@@ -164,8 +164,16 @@ class PlaybulbAdapter extends Adapter {
    * Pure helper function to start noble scanning.
    */
   _startNobleScanning() {
-    console.log('start scanning for Playbulb devices');
+    console.log('Start scanning for Playbulb devices...');
     noble.startScanning();
+  }
+
+  /**
+   * Pure helper function to stop noble scanning.
+   */
+  _stopNobleScanning() {
+    console.log('Stop scanning for Playbulb devices.');
+    noble.stopScanning();
   }
 
   /**

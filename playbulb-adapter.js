@@ -23,6 +23,7 @@ try {
   Device = gwa.Device;
   Property = gwa.Property;
 }
+const noble = require('noble');
 
 class PlaybulbProperty extends Property {
   constructor(device, name, propertyDescription) {
@@ -72,6 +73,88 @@ class PlaybulbAdapter extends Adapter {
   constructor(addonManager, packageName) {
     super(addonManager, 'PlaybulbAdapter', packageName);
     addonManager.addAdapter(this);
+
+    this._startBLEDiscovery();
+  }
+
+  /**
+   * Start discovering BLE devices.
+   */
+  _startBLEDiscovery() {
+    noble.on('stateChange', this.handleStateChange);
+    noble.on('scanStart', this.handleScanStart);
+    noble.on('scanStop', this.handleScanStop);
+    noble.on('discover', this.handleDiscover);
+    // Only manually start if powered on already. Otherwise, wait for state
+    // change and handle it there.
+    if (noble._state === 'poweredOn') {
+      this._startNobleScanning();
+    }
+  }
+
+  /**
+   * Stop discovering BLE devices.
+   */
+  _stopBLEDiscovery() {
+    noble.stopScanning();
+    noble.removeListener('stateChange', this.handleStateChange);
+    noble.removeListener('scanStart', this.handleScanStart);
+    noble.removeListener('scanStop', this.handleScanStop);
+    noble.removeListener('discover', this.handleDiscover);
+  }
+
+  /**
+   * <mrstegeman> those are event callbacks. i found that noble doesn't do well when trying to both scan and communicate with an individual device, so when doing comms, i set a flag.
+   * <mrstegeman> so, if a scan was started right before comms start, i just shut down the scan in the callback
+   */
+  handleScanStart() {
+    if (!this.scanEnabled) {
+      noble.stopScanning();
+    }
+  }
+  handleScanStop() {
+    if (this.scanEnabled) {
+      noble.startScanning([], this.allowDuplicates);
+    }
+  }
+
+  /**
+   * We discovered a BLE device! Let's see if it's a Playbulb and add it.
+   */
+  _handleDiscover(peripheral) {
+    console.log('peripheral discovered (' + peripheral.id +
+                ' with address <' + peripheral.address +  ', ' + peripheral.addressType + '>,' +
+                ' connectable ' + peripheral.connectable + ',' +
+                ' RSSI ' + peripheral.rssi + ':');
+    console.log('\thello my local name is:');
+    console.log('\t\t' + peripheral.advertisement.localName);
+    console.log('\tcan I interest you in any of the following advertised services:');
+    console.log('\t\t' + JSON.stringify(peripheral.advertisement.serviceUuids));
+
+    var serviceData = peripheral.advertisement.serviceData;
+    if (serviceData && serviceData.length) {
+      console.log('\there is my service data:');
+      for (var i in serviceData) {
+        console.log('\t\t' + JSON.stringify(serviceData[i].uuid) + ': ' + JSON.stringify(serviceData[i].data.toString('hex')));
+      }
+    }
+    if (peripheral.advertisement.manufacturerData) {
+      console.log('\there is my manufacturer data:');
+      console.log('\t\t' + JSON.stringify(peripheral.advertisement.manufacturerData.toString('hex')));
+    }
+    if (peripheral.advertisement.txPowerLevel !== undefined) {
+      console.log('\tmy TX power level is:');
+      console.log('\t\t' + peripheral.advertisement.txPowerLevel);
+    }
+
+    console.log();
+  }
+
+  /**
+   * Pure helkper function to start noble scanning.
+   */
+  _startNobleScanning() {
+    noble.startScanning([], this.allowDuplicates);
   }
 
   /**
@@ -123,6 +206,7 @@ class PlaybulbAdapter extends Adapter {
   startPairing(_timeoutSeconds) {
     console.log('PlaybulbAdapter:', this.name,
                 'id', this.id, 'pairing started');
+    this._startBLEDiscovery();
   }
 
   /**
@@ -131,6 +215,7 @@ class PlaybulbAdapter extends Adapter {
   cancelPairing() {
     console.log('PlaybulbAdapter:', this.name, 'id', this.id,
                 'pairing cancelled');
+    this._stopBLEDiscovery();
   }
 
   /**

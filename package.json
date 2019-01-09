@@ -20,6 +20,9 @@
   "bugs": {
     "url": "https://github.com/KaiRo-at/playbulb-adapter/issues"
   },
+  "dependencies": {
+    "noble": "^1.9.1",
+  },
   "devDependencies": {
     "eslint": "^4.19.1"
   },

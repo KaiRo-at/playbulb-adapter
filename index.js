@@ -8,4 +8,4 @@
 
 'use strict';
 
-module.exports = require('./example-adapter');
+module.exports = require('./playbulb-adapter');
